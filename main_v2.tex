@@ -155,11 +155,13 @@ The only difference compared to a standard NN is that the target output is not k
 
 To further elaborate on this approach we propose two variants for this method. We work in a similar context as above, reiterated it is as follows.
 
-Let $X(t) = S[t, t-1, \ldots]$ define the inputs at time $t$ which would ideally consist of temporally stacked solar images. In both cases we consider a standard convolutional architecture leading to a fully connected segment.
+Let $X(t) = (S(t), S(t-1), \cdots, S(t-p))$ define the inputs at time $t$ which would ideally consist of temporally stacked solar images. In both cases we consider a standard convolutional architecture leading to a fully connected segment.
 
-\textbf{Assumption}: We define a finite time window for effects of information stored in $X(t)$ to propagate to L1, which means that for any time $t$, we define some interval $[t+m, t+m+n], m,n > 0$ where we expect the effects to be apparent. The aim of our neural architecture is to predict the relevant solar wind quantity ($v$ or $B_z$) as well as an estimate $\hat{\delta} t \in [m, m+n]$ which determines the point in time, $t+\hat{\delta} t$ when this effect will be observed.
+\textbf{Assumption}: We define a finite time window for effects of information stored in $X(t)$ to propagate to L1, which means that for any time $t$, we define some interval $[t+m, t+m+n], m,n > 0$ where we expect the effects to be apparent. The aim of our neural architecture is to predict the relevant solar wind quantity ($v$ or $B_z$) as well as an estimate $\hat{\delta} t \in [m, m+n]$ which determines the point in time, $t+\hat{\delta} t$ when this effect will be observed. This can be formulated as two related models of differing construction
 
 \subsubsection*{Model A}
+
+Here for every time $t$, we generate a prediction for solar wind velocity $v(t+m) , \cdots, v(t+m+n)$ and a set of probabilities or weights $\mathbf{p}$. The elements of $\mathbf{\hat{p}}$ express the model's confidence that the strongest causal effect of images $X(t)$ will be felt at times $t+m, \cdots, t+m+n$ respectively.
 
 \begin{align*}
     \mathbf{\hat{v}}(X(t))  & \in \mathbb{R}_{+}^{n+1}\\
@@ -168,13 +170,14 @@ Let $X(t) = S[t, t-1, \ldots]$ define the inputs at time $t$ which would ideally
     \mathbf{\hat{y}}(X(t))  & = f_{\theta}(X(t))
 \end{align*}
 
-\textbf{Loss}:
+\textbf{Loss}: 
 
 \begin{align*}
     X_{k}                     & = { X(t_{k}) } \ \ \forall k \in {1, \cdots, D} \\
-    \mathcal{L}(\theta, X, v) & = \frac{1}{2} \sum_{k = 1}^{D}{\sum_{i = 0}^{n}{|v(t_{k}+m+i) - \hat{v}_{i}(X_k))|^{2} \times \hat{p}(X_{k})}}
+    \mathcal{L}(\theta, X, v) & = \frac{1}{2} \sum_{k = 1}^{D}{\sum_{i = 0}^{n}{|v(t_{k}+m+i) - \hat{v}_{i}(X_k))|^{2} \times \hat{p}_{i}(X_{k})}}
 \end{align*}
 
+The loss function calculates a weighted penalty term which enforces the model to make accurate predictions ($|v(t_{k}+m+i) - \hat{v}_{i}(X_k))|^{2}$) and weights these errors by the model's confidence about the causal/predictive potential of a model predicting $v(t_{k}+m+i)$ from images $X_k$
 
 \subsubsection*{Model B}
 
