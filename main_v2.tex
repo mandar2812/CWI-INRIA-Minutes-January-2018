@@ -153,7 +153,9 @@ The only difference compared to a standard NN is that the target output is not k
 
 \textbf{Remarks}. Let us initialize the network such that $\delta$ computes the average delay at the beginning. Later: We might want to add another term to the loss, to enforce that $\delta$ should vary smoothly along time.
 
-To further elaborate on this approach we propose two variants for this method. We work in a similar context as above, reiterated it is as follows.
+\subsection*{Methodology}
+
+To further elaborate the approach presented in \ref{model4}, we propose two variants for this method. We work in a similar context as above, reiterated it is as follows.
 
 Let $X(t) = (S(t), S(t-1), \cdots, S(t-p))$ define the inputs at time $t$ which would ideally consist of temporally stacked solar images. In both cases we consider a standard convolutional architecture leading to a fully connected segment.
 
