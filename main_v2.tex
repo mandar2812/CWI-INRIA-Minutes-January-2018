@@ -1,0 +1,200 @@
+\documentclass[]{article}
+
+%These tell TeX which packages to use.
+\usepackage{array,epsfig}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsxtra}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{color}
+
+%Here I define some theorem styles and shortcut commands for symbols I use often
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem*{rmk}{Remark}
+\newtheorem{lem}{Lemma}
+\newtheorem*{joke}{Joke}
+\newtheorem{ex}{Example}
+\newtheorem*{soln}{Solution}
+\newtheorem{prop}{Proposition}
+
+\newcommand{\lra}{\longrightarrow}
+\newcommand{\ra}{\rightarrow}
+\newcommand{\surj}{\twoheadrightarrow}
+\newcommand{\graph}{\mathrm{graph}}
+\newcommand{\bb}[1]{\mathbb{#1}}
+\newcommand{\Z}{\bb{Z}}
+\newcommand{\Q}{\bb{Q}}
+\newcommand{\R}{\bb{R}}
+\newcommand{\C}{\bb{C}}
+\newcommand{\N}{\bb{N}}
+\newcommand{\M}{\mathbf{M}}
+\newcommand{\m}{\mathbf{m}}
+\newcommand{\MM}{\mathscr{M}}
+\newcommand{\HH}{\mathscr{H}}
+\newcommand{\Om}{\Omega}
+\newcommand{\Ho}{\in\HH(\Om)}
+\newcommand{\bd}{\partial}
+\newcommand{\del}{\partial}
+\newcommand{\bardel}{\overline\partial}
+\newcommand{\textdf}[1]{\textbf{\textsf{#1}}\index{#1}}
+\newcommand{\img}{\mathrm{img}}
+\newcommand{\ip}[2]{\left\langle{#1},{#2}\right\rangle}
+\newcommand{\inter}[1]{\mathrm{int}{#1}}
+\newcommand{\exter}[1]{\mathrm{ext}{#1}}
+\newcommand{\cl}[1]{\mathrm{cl}{#1}}
+\newcommand{\ds}{\displaystyle}
+\newcommand{\vol}{\mathrm{vol}}
+\newcommand{\cnt}{\mathrm{ct}}
+\newcommand{\osc}{\mathrm{osc}}
+\newcommand{\LL}{\mathbf{L}}
+\newcommand{\UU}{\mathbf{U}}
+\newcommand{\support}{\mathrm{support}}
+\newcommand{\AND}{\;\wedge\;}
+\newcommand{\OR}{\;\vee\;}
+\newcommand{\Oset}{\varnothing}
+\newcommand{\st}{\ni}
+\newcommand{\wh}{\widehat}
+
+%Pagination stuff.
+\setlength{\topmargin}{-.3 in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\textheight}{9.in}
+\setlength{\textwidth}{6.5in}
+\pagestyle{empty}
+
+
+
+\begin{document}
+
+
+\begin{center}
+{\Large CWI INRIA Meeting \ January 2018}\\
+\textbf{Mandar Chandorkar}, \textbf{Enrico Camporeale}, \textbf{Mich\`ele Sebag}, \textbf{Cyril Furtlehner}, \textbf{Giancarlo Fissore}
+\end{center}
+
+\vspace{0.2 cm}
+\section{December  $-$ Mid-January}
+The goal of predicting the average X-ray flux from the solar images has been considered, with the rationale that the target quantity (the average X-ray) is measured with almost no delay at L1 (delay $<$ 10 mn). The discussion concluded that:
+\begin{itemize}
+\item If successful, the predictive value of the classifier is moderate as X-ray is measured at L1 with no difficulty;
+\item The success of this classifier does not imply that the neural architecture is ok to predict other quantities of interest;
+\item In any case, the validation of the classifier must proceed by dividing the series in, say, 10 segments, using all but one segment as training set and the remaining one as test set, to avoid over-optimistic evaluation.
+\end{itemize}
+
+
+\section{Next: Solar Wind Prediction}
+
+The aim is to predict a key L1 quantity noted $Y$ in the following (solar wind speed; $v_{sw}$ and north-south component of interplanetary magnetic field; $B_z$) from solar images and auxiliary data. The difficulty is that there exists a delay between the solar image and its effects at L1.
+
+
+\subsection{Position of the problem}\label{assum}
+Let $X(t) = S[t, t-1, \ldots]$ denote the solar images up to time $t$. The goal is to predict from $X(t)$: i) the delay $\delta(X(t))$ between the cause and the effects, where the cause is $X(t)$ and the effect is the $Y$ quantity measured at L1 at time $t + \delta(X)$; ii) the said effect noted $Y(t + \delta(X(t)))$.
+These two quantities must be predicted together as this delay varies.\footnote{Which is the interval of variation ?}
+
+{\bf Assumption, to be checked}: whether $t + \delta(X(t))$ is a monotonous function of $t$ (effects of later images cannot be measured earlier).
+
+\subsection{Approach 1: Committee of Experts}\label{model1}
+Let us consider 3 models, respectively 
+$f_1, f_2, f_3$, where $f_i$ is trained from $S[t-24*(i-1), \ldots, t-24*i$ to predict the quantity of interest at time $t+24$.
+Intuitively, these three models respectively correspond to the model of fast, medium and slow speed days. The overall model (meta-model) is learned as a mixture, 
+\[ Y = \sum_i \alpha_i(X(t)) f_i(X(t)) \]
+where weights $\alpha_i(X(t))$ themselves depend on $X(t)$. 
+
+The difficulty is that one must already knows whether $\delta(X(t))$ falls in the categories of fast, medium or slow delay, in order to train $f_1, f_2, f_3$: when using the whole $X(t)$ to learn $f_i$, one gets an average model (Fig. 56 in Mhamed Hajaiej's Master report).
+
+A possible approach to address this is to use an EM procedure (model \ref{model3}).
+
+\subsection{CNN \& Hybrid 1d MHD}
+
+In this approach, we use a CNN architecture to predict a latent variable $v_{sw}(r = 30r_s, \phi)$ and propagate it forward with a simplified 1-D \textit{magneto-hydro dynamics} model which can be expressed as follows.
+
+\begin{equation}
+    v_{i+1,j} = v_{i,j} + \frac{\Delta r \Omega_{rot}}{v_{i,j}} \left (\frac{v_{i,j+1} - v_{i,j}}{\Delta \phi} \right )
+\end{equation}
+
+The 1-D MHD model can then be integrated to provide an estimate of the propagation time of the solar wind disturbances. In order to perform inference, we must cast the problem as a latent variable EM method. 
+
+\textbf{Difficulty Level}: Moderate, greater than method \ref{model1}, will take more time for training due to latent variables and convergence time of EM procedures. Number of latent variables depends on the coarseness of grid in the Carrington longitude $\phi$, this will generally have the effect of larger training times and identifiability (multiple initial velocity profiles $v_{sw}(r = 30r_s, \phi)$ might yield similar values of L1 solar wind).
+
+\textbf{MS: The difficulty is not moderate}: in all cases, we need a latent scalar variable, $\delta(X)$; here this latent variable is computed from *several* latent variables. In all cases, the validation is only possible by putting the latent variables within the prediction model $\Phi(X) = Y(t + \delta(X))$. 
+
+\subsection{EM approach based on dynamic time warping}\label{model3}
+
+Let us reconsider the average prediction (Fig. 56 in Mhamed Hajaiej's Master report), denoted $\Phi_0$, where $\Phi_0(X(t))$ estimates the quantity of interest $\widehat{Y(t+24)}$. 
+
+Apply dynamic time warping on the pair of curves, ground truth $Y(u)$ and predicted $\widehat{Y(u)}$. Let $\sigma$ be the mapping from the predicted time onto the real time, i.e. such that it minimizes the distance between $\widehat{Y(\sigma(u))}$ and $Y(u)$. 
+
+Define the regression problem mapping $S[t-k \ldots t]$ onto the 2-dimensional vector $\sigma(u+24), Y(\sigma(u+24))$. 
+
+Let $\Phi_1$ denote the regressor learned from the above problem. 
+
+Plot the curve along time. The expectation is that it is closer to the ground truth curve than the curve obtained from $\Phi_0$. 
+
+\textbf{The question is whether this process converges}. If the dynamic time warping assumption holds (Assumption \ref{assum}), it should. Otherwise, we have to reconsider the dynamic time warping step.
+
+\subsection{Training both from scratch}\label{model4}
+
+Let us consider a NN mapping $X(t) = S[t, t-1, \ldots]$ onto a 2-dimensional vector noted $(\delta, Z)$. 
+The problem is solved if i) $\delta$ is consistent with physics knowledge about the delay (constraint noted $C(\delta)$); ii) $Z$ is close to $Y(t+\delta)$ (it should read $Y(t+\delta+24)$ to keep the same notations as before).
+
+Let us define the loss function as follows. Given the whole curve $Y(u)$, given $t$, $\delta$ and $Z$, let $\delta^*$ be such that i) it is consistent, $C(\delta^*)$ and ii) it minimizes
+\[ \delta^* = \arg \min \{ (\delta - \delta^*)^2 + (Y(t + \delta^*) - Z)^2 \}
+ \]
+Then, the target output associated to input $S[t-k \ldots t]$ is $(\delta^*, Y(t + \delta^*)$. 
+Let the back-propagation be as usual. 
+
+The only difference compared to a standard NN is that the target output is not known a priori, but computed from the input and the NN output (``first guess''). 
+
+\textbf{Remarks}. Let us initialize the network such that $\delta$ computes the average delay at the beginning. Later: We might want to add another term to the loss, to enforce that $\delta$ should vary smoothly along time.
+
+To further elaborate on this approach we propose two variants for this method. We work in a similar context as above, reiterated it is as follows.
+
+Let $X(t) = S[t, t-1, \ldots]$ define the inputs at time $t$ which would ideally consist of temporally stacked solar images. In both cases we consider a standard convolutional architecture leading to a fully connected segment.
+
+\textbf{Assumption}: We define a finite time window for effects of information stored in $X(t)$ to propagate to L1, which means that for any time $t$, we define some interval $[t+m, t+m+n], m,n > 0$ where we expect the effects to be apparent. The aim of our neural architecture is to predict the relevant solar wind quantity ($v$ or $B_z$) as well as an estimate $\hat{\delta} t \in [m, m+n]$ which determines the point in time, $t+\hat{\delta} t$ when this effect will be observed.
+
+\subsubsection*{Model A}
+
+\begin{align*}
+    \mathbf{\hat{v}}(X(t))  & \in \mathbb{R}_{+}^{n+1}\\
+    \mathbf{\hat{p}}(X(t))  & \in [0, 1]^{n+1}, \ \ \sum_{i = 1}^{n+1}{\hat{p}_{i}(X(t))} = 1\\
+    \mathbf{\hat{y}}(X(t))  & = (\mathbf{\hat{v}}(X(t)), \mathbf{\hat{p}}(X(t)))\\
+    \mathbf{\hat{y}}(X(t))  & = f_{\theta}(X(t))
+\end{align*}
+
+\textbf{Loss}:
+
+\begin{align*}
+    X_{k}                     & = { X(t_{k}) } \ \ \forall k \in {1, \cdots, D} \\
+    \mathcal{L}(\theta, X, v) & = \frac{1}{2} \sum_{k = 1}^{D}{\sum_{i = 0}^{n}{|v(t_{k}+m+i) - \hat{v}_{i}(X_k))|^{2} \times \hat{p}(X_{k})}}
+\end{align*}
+
+
+\subsubsection*{Model B}
+
+\begin{align*}
+    \hat{\delta}t(X(t))    & \in [t+m, t+m+n] \\ 
+    \hat{v}(X(t))          & \in \mathbb{R}_{+}\\
+    \mathbf{\hat{y}}(X(t)) & =   (\hat{v}(X(t)), \hat{\delta}t(X(t)))^T\\
+    \mathbf{\hat{y}}(X(t)) & =   f_{\theta}(X(t))
+\end{align*}
+
+\textbf{Loss}:
+
+\begin{align*}
+    X_{k}                     & = { X(t_{k}) } \ \ \forall k \in {1, \cdots, D} \\
+    \mathcal{L}(\theta, X, v) & = \frac{1}{2} \sum_{k = 1}^{D}{\sum_{i = 0}^{n}{|v(t_{k}+m+i) - \hat{v}(X_k))|^{2} \times K(t_{k} + \hat{\delta}t(X(t_k)), t_{k}+m+i) }} \\
+    K(u, v)                   & = exp(-\frac{1}{2}|u-v|^{2}/l^2) 
+\end{align*}
+
+
+
+\end{document}
+
+

@@ -1,0 +1,116 @@
+\documentclass[]{book}
+
+%These tell TeX which packages to use.
+\usepackage{array,epsfig}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsxtra}
+\usepackage{amsthm}
+\usepackage{mathrsfs}
+\usepackage{color}
+
+%Here I define some theorem styles and shortcut commands for symbols I use often
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}
+\newtheorem{thm}{Theorem}
+\newtheorem{cor}{Corollary}
+\newtheorem*{rmk}{Remark}
+\newtheorem{lem}{Lemma}
+\newtheorem*{joke}{Joke}
+\newtheorem{ex}{Example}
+\newtheorem*{soln}{Solution}
+\newtheorem{prop}{Proposition}
+
+\newcommand{\lra}{\longrightarrow}
+\newcommand{\ra}{\rightarrow}
+\newcommand{\surj}{\twoheadrightarrow}
+\newcommand{\graph}{\mathrm{graph}}
+\newcommand{\bb}[1]{\mathbb{#1}}
+\newcommand{\Z}{\bb{Z}}
+\newcommand{\Q}{\bb{Q}}
+\newcommand{\R}{\bb{R}}
+\newcommand{\C}{\bb{C}}
+\newcommand{\N}{\bb{N}}
+\newcommand{\M}{\mathbf{M}}
+\newcommand{\m}{\mathbf{m}}
+\newcommand{\MM}{\mathscr{M}}
+\newcommand{\HH}{\mathscr{H}}
+\newcommand{\Om}{\Omega}
+\newcommand{\Ho}{\in\HH(\Om)}
+\newcommand{\bd}{\partial}
+\newcommand{\del}{\partial}
+\newcommand{\bardel}{\overline\partial}
+\newcommand{\textdf}[1]{\textbf{\textsf{#1}}\index{#1}}
+\newcommand{\img}{\mathrm{img}}
+\newcommand{\ip}[2]{\left\langle{#1},{#2}\right\rangle}
+\newcommand{\inter}[1]{\mathrm{int}{#1}}
+\newcommand{\exter}[1]{\mathrm{ext}{#1}}
+\newcommand{\cl}[1]{\mathrm{cl}{#1}}
+\newcommand{\ds}{\displaystyle}
+\newcommand{\vol}{\mathrm{vol}}
+\newcommand{\cnt}{\mathrm{ct}}
+\newcommand{\osc}{\mathrm{osc}}
+\newcommand{\LL}{\mathbf{L}}
+\newcommand{\UU}{\mathbf{U}}
+\newcommand{\support}{\mathrm{support}}
+\newcommand{\AND}{\;\wedge\;}
+\newcommand{\OR}{\;\vee\;}
+\newcommand{\Oset}{\varnothing}
+\newcommand{\st}{\ni}
+\newcommand{\wh}{\widehat}
+
+%Pagination stuff.
+\setlength{\topmargin}{-.3 in}
+\setlength{\oddsidemargin}{0in}
+\setlength{\evensidemargin}{0in}
+\setlength{\textheight}{9.in}
+\setlength{\textwidth}{6.5in}
+\pagestyle{empty}
+
+
+
+\begin{document}
+
+
+\begin{center}
+{\Large CWI INRIA Meeting \ January 2018}\\
+\textbf{Mandar Chandorkar}, \textbf{Enrico Camporeale}, \textbf{Mich\'el\`e Sebag}, \textbf{Cyril Furtlehner}, \textbf{Giancarlo Fissore}
+\end{center}
+
+\vspace{0.2 cm}
+
+\section{Solar Wind Prediction}
+
+The general aim is to predict key L1 quantities (solar wind speed; $v_{sw}$ and north-south component of interplanetary magnetic field; $B_z$) from solar images and auxillary data. 
+
+\subsection{Committee of Experts: Meta-Model}\label{model1}
+
+Consider the task of predicting $v_{sw}(t)$ from stacked solar images $S(t) = [S(t:t-24), S(t-24:t-48), S(t-48:t-72)]$, we can train CNN based predictive models $\mathcal{M}_1[\hat{v}_{sw}(t) = f_{1}(S(t:t-24))]$, $\mathcal{M}_2[\hat{v}_{sw}(t) = f_{2}(S(t-24:t-48))]$ and $\mathcal{M}_3[\hat{v}_{sw}(t) = f_{3}(S(t-48:t-72))]$.
+
+The next task is then to train a meta model $\mathcal{F}[\hat{v}_{sw}(t) = \sum_{i}{\alpha_{i}(S(t))f_{i}(S_{i}(t))}]$, where $\alpha_{i}(S(t))$ is the confidence $\mathcal{F}$ places on model $\mathcal{M}_i$. We can also consider the more general model $\mathcal{F}[\hat{v}_{sw}(t) = f(S(t), f_{i}(S_{i}(t)))]$, after training the committee constituents, the meta-model can be represented and trained as a neural architecture.
+
+\textbf{Difficulty Level}: Moderate, can be achieved using standard neural network toolboxes. 
+
+\subsection{CNN \& Hybrid 1d MHD}
+
+In this approach, we use a CNN architecture to predict a latent variable $v_{sw}(r = 30r_s, \phi)$ and propagate it forward with a simplified 1-D \textit{magneto-hydro dynamics} model which can be expressed as follows.
+
+\begin{equation}
+    v_{i+1,j} = v_{i,j} + \frac{\Delta r \Omega_{rot}}{v_{i,j}} \left (\frac{v_{i,j+1} - v_{i,j}}{\Delta \phi} \right )
+\end{equation}
+
+The 1-D MHD model can then be integrated to provide an estimate of the propagation time of the solar wind disturbances. In order to perform inference, we must cast the problem as a latent variable EM method. 
+
+\textbf{Difficulty Level}: Moderate, greater than method \ref{model1}, will take more time for training due to latent variables and convergence time of EM procedures. Number of latent variables depends on the coarseness of grid in the Carrington longitude $\phi$, this will generally have the effect of larger training times and identifiability (multiple initial velocity profiles $v_{sw}(r = 30r_s, \phi)$ might yield similar values of L1 solar wind).
+
+\subsection{CNN based prediction of time delay and solar wind}
+
+A CNN based architecture which predicts simultaneously $\Delta t$ and $v_{sw}(t + \Delta t)$ from a set of solar images $S(t)$.
+
+\textbf{Challenges, Issues}: \begin{enumerate} \item Is this problem supervised/unsupervised/semi-supervised ? \item How will the training data be pre-processed to enable model training ? \item Need careful thought on how an appropriate loss function can be formulated for this task \end{enumerate}
+
+
+\end{document}
+
+
