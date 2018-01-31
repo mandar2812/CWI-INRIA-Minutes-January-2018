@@ -181,6 +181,8 @@ The loss function calculates a weighted penalty term which enforces the model to
 
 \subsubsection*{Model B}
 
+In scheme 2, for every time $t$, the model generates two predictions $\hat{v}(X(t))$ and a time delay estimate $\hat{\delta}t(X(t))$.
+
 \begin{align*}
     \hat{\delta}t(X(t))    & \in [t+m, t+m+n] \\ 
     \hat{v}(X(t))          & \in \mathbb{R}_{+}\\
@@ -197,6 +199,13 @@ The loss function calculates a weighted penalty term which enforces the model to
 \end{align*}
 
 
+The model's loss is expressed as a weighted sum of errors $|v(t_{k}+m+i) - \hat{v}(X_k))|^{2}$. The weights are defined by a \emph{kernel} or \emph{correlation} function $K(u, v)$. 
+
+The weight function $K(t_{k} + \hat{\delta}t(X(t_k)),.)$ has a higher value ($\sim 1$) when the predicted time of the causal effect $t_{k} + \hat{\delta}t(X(t_k))$ is close to the time of the observed data point $t_{k}+m+i$, else it decays to $0$.
+
+$K$ can be chosen to closely match the statistical auto-correlation of the solar wind. We know that there is strong auto-correlation in the solar wind upto 2-3 hours, thus by adjusting the time scale $l$, the weight function $K$ can mimic these statistical effects.
+
+The loss function requires that the model must simultaneously give accurate predictions and an accurate estimate of when those effects are observed. 
 
 \end{document}
 
