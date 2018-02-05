@@ -186,7 +186,7 @@ The loss function calculates a weighted penalty term which enforces the model to
 In scheme 2, for every time $t$, the model generates two predictions $\hat{v}(X(t))$ and a time delay estimate $\hat{\delta}t(X(t))$.
 
 \begin{align*}
-    \hat{\delta}t(X(t))    & \in [t+m, t+m+n] \\ 
+    \hat{\delta}t(X(t))    & \in [0, n] \\ 
     \hat{v}(X(t))          & \in \mathbb{R}_{+}\\
     \mathbf{\hat{y}}(X(t)) & =   (\hat{v}(X(t)), \hat{\delta}t(X(t)))^T\\
     \mathbf{\hat{y}}(X(t)) & =   f_{\theta}(X(t))
@@ -196,7 +196,7 @@ In scheme 2, for every time $t$, the model generates two predictions $\hat{v}(X(
 
 \begin{align*}
     X_{k}                     & = { X(t_{k}) } \ \ \forall k \in {1, \cdots, D} \\
-    \mathcal{L}(\theta, X, v) & = \frac{1}{2} \sum_{k = 1}^{D}{\sum_{i = 0}^{n}{|v(t_{k}+m+i) - \hat{v}(X_k))|^{2} \times K(t_{k} + \hat{\delta}t(X(t_k)), t_{k}+m+i) }} \\
+    \mathcal{L}(\theta, X, v) & = \frac{1}{2} \sum_{k = 1}^{D}{\sum_{i = 0}^{n}{|v(t_{k}+m+i) - \hat{v}(X_k))|^{2} \times K(t_{k} + m + \hat{\delta}t(X(t_k)), t_{k}+m+i) }} \\
     K(u, v)                   & = exp(-\frac{1}{2}|u-v|^{2}/l^2) 
 \end{align*}
 
